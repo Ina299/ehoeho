@@ -76,7 +76,19 @@ export default function Home() {
         },
         undefined,
         function (error) {
-          console.error('An error happened during loading:', error);
+          console.error('An error happened during loading the GLB model:', error);
+          // エラーオブジェクトの詳細を出力
+          if (error instanceof ErrorEvent) {
+            console.error('ErrorEvent details:', {
+              message: error.message,
+              filename: error.filename,
+              lineno: error.lineno,
+              colno: error.colno,
+              error: error.error // ネストされたエラーオブジェクト
+            });
+          } else {
+            console.error('Error details:', error); // その他のエラータイプ
+          }
         }
       );
 
