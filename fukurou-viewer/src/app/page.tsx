@@ -10,7 +10,12 @@ export default function Home() {
   const clockRef = useRef(new THREE.Clock()); // ClockをRefで管理
 
   useEffect(() => {
-    if (!mountRef.current) return;
+    console.log('useEffect started'); // useEffect の開始ログ
+    if (!mountRef.current) {
+      console.log('mountRef is not available yet.');
+      return;
+    }
+    console.log('mountRef is available.');
 
     let scene: THREE.Scene,
         camera: THREE.PerspectiveCamera,
@@ -22,6 +27,7 @@ export default function Home() {
     const currentMount = mountRef.current;
 
     function init() {
+      console.log('init function started'); // init 関数の開始ログ
       // Scene
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0xeeeeee);
@@ -35,38 +41,38 @@ export default function Home() {
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
       currentMount.appendChild(renderer.domElement);
+      console.log('Renderer initialized and appended.');
 
       // Controls
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.screenSpacePanning = false; // screenSpacePanning は false のまま
+      controls.screenSpacePanning = false;
       controls.minDistance = 1;
       controls.maxDistance = 50;
       controls.target.set(0, 1, 0);
-
-      // 右クリックでのパン操作を無効化し、コンテキストメニューを許可
-      controls.mouseButtons.RIGHT = null; // THREE.MOUSE.PAN を null に変更
-
+      controls.mouseButtons.RIGHT = null; // 右クリックを有効化
       controls.update();
-
+      console.log('OrbitControls initialized.');
 
       // Lights
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
       scene.add(ambientLight);
-
       const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
       directionalLight.position.set(5, 10, 7.5);
       scene.add(directionalLight);
+      console.log('Lights added.');
 
       // Load GLB model
       const loader = new GLTFLoader();
+      console.log('Attempting to load GLB model...'); // GLB読み込み開始ログ
       loader.load(
         '/fukurou.glb',
         function (gltf) {
+          console.log('GLB model loaded successfully callback entered.'); // 成功コールバック開始ログ
           model = gltf.scene;
           scene.add(model);
-          console.log('Model loaded successfully');
+          console.log('Model added to scene.');
 
           // Animation Mixer Setup
           console.log('Checking for animations...');
@@ -74,7 +80,6 @@ export default function Home() {
             console.log(`Found ${gltf.animations.length} animations.`);
             mixer = new THREE.AnimationMixer(model);
             console.log('AnimationMixer created.');
-            // 最初のアニメーションだけ再生する場合
             const action = mixer.clipAction(gltf.animations[0]);
             console.log('AnimationClip action created.');
             action.play();
@@ -83,20 +88,19 @@ export default function Home() {
             console.log('No animations found in the model');
           }
         },
-        undefined,
+        undefined, // Progress callback (optional)
         function (error) {
           console.error('An error happened during loading the GLB model:', error);
-          // エラーオブジェクトの詳細を出力
           if (error instanceof ErrorEvent) {
             console.error('ErrorEvent details:', {
               message: error.message,
               filename: error.filename,
               lineno: error.lineno,
               colno: error.colno,
-              error: error.error // ネストされたエラーオブジェクト
+              error: error.error
             });
           } else {
-            console.error('Error details:', error); // その他のエラータイプ
+            console.error('Error details:', error);
           }
         }
       );
@@ -105,6 +109,7 @@ export default function Home() {
       window.addEventListener('resize', onWindowResize, false);
 
       animate();
+      console.log('animate function called initially.');
     }
 
     function onWindowResize() {
@@ -112,30 +117,35 @@ export default function Home() {
       camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
+      // console.log('Window resized.'); // リサイズ頻度によってはログが多くなるためコメントアウト
     }
 
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clockRef.current.getDelta(); // Clockから経過時間を取得
+      const delta = clockRef.current.getDelta();
       controls.update();
       if (mixer) {
-        // console.log(`Updating mixer with delta: ${delta}`); // 毎フレーム呼ばれるのでコメントアウト推奨
-        mixer.update(delta); // Mixerを更新
+        mixer.update(delta);
       }
-      renderer.render(scene, camera);
+      if (renderer && scene && camera) { // 修正: &amp;&amp; -> && (3箇所)
+        renderer.render(scene, camera);
+      } else {
+        // console.log('Renderer, scene or camera not ready for rendering.'); // 初期化前はログが多くなる可能性
+      }
     }
 
     init();
 
     // クリーンアップ関数
     return () => {
+      console.log('useEffect cleanup function called.'); // クリーンアップログ
       window.removeEventListener('resize', onWindowResize);
       if (renderer) {
-        // Check if currentMount and renderer.domElement exist before removing
         if (currentMount && renderer.domElement.parentNode === currentMount) { // 修正: &amp;&amp; -> &&
           currentMount.removeChild(renderer.domElement);
         }
         renderer.dispose();
+        console.log('Renderer disposed.');
       }
       if (scene) {
         scene.traverse((object) => {
@@ -148,10 +158,13 @@ export default function Home() {
             }
           }
         });
+        console.log('Scene resources disposed.');
       }
       if (controls) {
         controls.dispose();
+        console.log('Controls disposed.');
       }
+      mixer = null; // ミキサーもクリア
     };
   }, []); // Empty dependency array ensures this runs only once on mount
 
