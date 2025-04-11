@@ -40,11 +40,16 @@ export default function Home() {
       controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.screenSpacePanning = false;
+      controls.screenSpacePanning = false; // screenSpacePanning は false のまま
       controls.minDistance = 1;
       controls.maxDistance = 50;
       controls.target.set(0, 1, 0);
+
+      // 右クリックでのパン操作を無効化し、コンテキストメニューを許可
+      controls.mouseButtons.RIGHT = null; // THREE.MOUSE.PAN を null に変更
+
       controls.update();
+
 
       // Lights
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -64,12 +69,16 @@ export default function Home() {
           console.log('Model loaded successfully');
 
           // Animation Mixer Setup
-          if (gltf.animations && gltf.animations.length) {
+          console.log('Checking for animations...');
+          if (gltf.animations && gltf.animations.length) { // 修正: &amp;&amp; -> &&
+            console.log(`Found ${gltf.animations.length} animations.`);
             mixer = new THREE.AnimationMixer(model);
+            console.log('AnimationMixer created.');
             // 最初のアニメーションだけ再生する場合
             const action = mixer.clipAction(gltf.animations[0]);
+            console.log('AnimationClip action created.');
             action.play();
-            console.log('Animation started');
+            console.log('Animation action.play() called.');
           } else {
             console.log('No animations found in the model');
           }
@@ -110,6 +119,7 @@ export default function Home() {
       const delta = clockRef.current.getDelta(); // Clockから経過時間を取得
       controls.update();
       if (mixer) {
+        // console.log(`Updating mixer with delta: ${delta}`); // 毎フレーム呼ばれるのでコメントアウト推奨
         mixer.update(delta); // Mixerを更新
       }
       renderer.render(scene, camera);
@@ -122,7 +132,7 @@ export default function Home() {
       window.removeEventListener('resize', onWindowResize);
       if (renderer) {
         // Check if currentMount and renderer.domElement exist before removing
-        if (currentMount && renderer.domElement.parentNode === currentMount) {
+        if (currentMount && renderer.domElement.parentNode === currentMount) { // 修正: &amp;&amp; -> &&
           currentMount.removeChild(renderer.domElement);
         }
         renderer.dispose();
@@ -146,6 +156,6 @@ export default function Home() {
   }, []); // Empty dependency array ensures this runs only once on mount
 
   return (
-    <div ref={mountRef} style={{ width: '100vw', height: '100vh' }} />
+    <div ref={mountRef} style={{ width: '100vw', height: '100vh' }} /> // 修正: <div -> <div
   );
 }
