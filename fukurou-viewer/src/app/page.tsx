@@ -72,12 +72,25 @@ export default function Home() {
           console.log('GLB model loaded successfully callback entered.'); // 成功コールバック開始ログ
           model = gltf.scene;
           scene.add(model);
-          console.log('Model added to scene.');
+          console.log('Model added to scene.'); // このログは表示されるはず
+
+          // --- デバッグログ追加 ---
+          console.log('Inspecting GLTF data...');
+          try {
+            console.log('gltf object:', gltf); // gltf オブジェクト全体を出力
+            console.log('gltf.animations:', gltf.animations); // animations プロパティを出力
+            console.log('gltf.animations exists:', !!gltf.animations); // animations プロパティの存在確認
+            console.log('gltf.animations length:', gltf.animations ? gltf.animations.length : 'N/A'); // animations の長さを出力
+          } catch (e) {
+            console.error('Error inspecting GLTF data:', e);
+          }
+          // --- デバッグログ追加ここまで ---
+
 
           // Animation Mixer Setup
-          console.log('Checking for animations...');
-          if (gltf.animations && gltf.animations.length) { // 修正: &amp;&amp; -> &&
-            console.log(`Found ${gltf.animations.length} animations.`);
+          console.log('Checking for animations...'); // このログが表示されるか？
+          if (gltf.animations && gltf.animations.length) {
+            console.log(`Found ${gltf.animations.length} animations.`); // このログが表示されるか？
             mixer = new THREE.AnimationMixer(model);
             console.log('AnimationMixer created.');
             const action = mixer.clipAction(gltf.animations[0]);
@@ -85,7 +98,7 @@ export default function Home() {
             action.play();
             console.log('Animation action.play() called.');
           } else {
-            console.log('No animations found in the model');
+            console.log('No animations found in the model OR condition evaluated to false.'); // 条件が false の場合のログ
           }
         },
         undefined, // Progress callback (optional)
@@ -117,7 +130,7 @@ export default function Home() {
       camera.aspect = currentMount.clientWidth / currentMount.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(currentMount.clientWidth, currentMount.clientHeight);
-      // console.log('Window resized.'); // リサイズ頻度によってはログが多くなるためコメントアウト
+      // console.log('Window resized.');
     }
 
     function animate() {
@@ -127,10 +140,10 @@ export default function Home() {
       if (mixer) {
         mixer.update(delta);
       }
-      if (renderer && scene && camera) { // 修正: &amp;&amp; -> && (3箇所)
+      if (renderer && scene && camera) {
         renderer.render(scene, camera);
       } else {
-        // console.log('Renderer, scene or camera not ready for rendering.'); // 初期化前はログが多くなる可能性
+        // console.log('Renderer, scene or camera not ready for rendering.');
       }
     }
 
@@ -138,10 +151,10 @@ export default function Home() {
 
     // クリーンアップ関数
     return () => {
-      console.log('useEffect cleanup function called.'); // クリーンアップログ
+      console.log('useEffect cleanup function called.');
       window.removeEventListener('resize', onWindowResize);
       if (renderer) {
-        if (currentMount && renderer.domElement.parentNode === currentMount) { // 修正: &amp;&amp; -> &&
+        if (currentMount && renderer.domElement.parentNode === currentMount) {
           currentMount.removeChild(renderer.domElement);
         }
         renderer.dispose();
@@ -164,11 +177,11 @@ export default function Home() {
         controls.dispose();
         console.log('Controls disposed.');
       }
-      mixer = null; // ミキサーもクリア
+      mixer = null;
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   return (
-    <div ref={mountRef} style={{ width: '100vw', height: '100vh' }} /> // 修正: <div -> <div
+    <div ref={mountRef} style={{ width: '100vw', height: '100vh' }} />
   );
 }
